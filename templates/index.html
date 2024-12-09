@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JFarm AI Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #188038;
+            --background-color: #ffffff;
+            --text-color: #202124;
+            --border-color: #dadce0;
+            --hover-color: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Google Sans', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--background-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--text-color);
+            text-decoration: none;
+        }
+
+        .main-content {
+            display: flex;
+            height: calc(100vh - 64px);
+        }
+
+        .sidebar {
+            width: 280px;
+            padding: 20px;
+            border-right: 1px solid var(--border-color);
+            background-color: var(--background-color);
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .input-container {
+            position: sticky;
+            bottom: 0;
+            background-color: var(--background-color);
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-box {
+            display: flex;
+            gap: 12px;
+            background-color: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 8px 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .input-box textarea {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 8px;
+            resize: none;
+            font-family: 'Google Sans', Arial, sans-serif;
+            font-size: 16px;
+            background: transparent;
+        }
+
+        .input-box .actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-family: 'Google Sans', Arial, sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #1557b0;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            color: #5f6368;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .btn-icon:hover {
+            background-color: var(--hover-color);
+        }
+
+        .message {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .message.user {
+            background-color: var(--hover-color);
+        }
+
+        .message.assistant {
+            background-color: var(--background-color);
+        }
+
+        .message .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+        }
+
+        .message .content {
+            flex: 1;
+        }
+
+        #imagePreview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px;
+            color: var(--text-color);
+        }
+
+        .loading .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .markdown-content {
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+        
+        .markdown-content p {
+            margin-bottom: 1em;
+        }
+        
+        .markdown-content h1, 
+        .markdown-content h2, 
+        .markdown-content h3, 
+        .markdown-content h4, 
+        .markdown-content h5, 
+        .markdown-content h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            font-weight: 600;
+        }
+        
+        .markdown-content code {
+            background: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            font-size: 85%;
+        }
+        
+        .markdown-content pre {
+            background: #f6f8fa;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+        }
+        
+        .markdown-content ul, 
+        .markdown-content ol {
+            padding-left: 2em;
+            margin-bottom: 1em;
+        }
+        
+        .markdown-content blockquote {
+            margin: 0;
+            padding-left: 1em;
+            border-left: 4px solid var(--border-color);
+            color: #666;
+        }
+        
+        .markdown-content img {
+            max-width: 100%;
+            border-radius: 6px;
+        }
+        
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1em;
+        }
+        
+        .markdown-content table th,
+        .markdown-content table td {
+            padding: 6px 13px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .markdown-content table tr:nth-child(2n) {
+            background-color: #f6f8fa;
+        }
+
+        /* Add processing overlay styles */
+        .processing-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .processing-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .processing-text {
+            font-family: 'Google Sans', Arial, sans-serif;
+            color: var(--text-color);
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .processing-progress {
+            width: 200px;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .processing-progress-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 30%;
+            background: var(--primary-color);
+            animation: progress 2s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0% {
+                left: -30%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Add processing overlay -->
+    <div class="processing-overlay" id="processingOverlay">
+        <div class="processing-spinner"></div>
+        <div class="processing-text">Processing your request...</div>
+        <div class="processing-progress">
+            <div class="processing-progress-bar"></div>
+        </div>
+    </div>
+
+    <header class="header">
+        <a href="/" class="logo">
+            <i class="fas fa-seedling" style="color: var(--secondary-color)"></i>
+            JFarm AI
+        </a>
+    </header>
+
+    <div class="main-content">
+        <aside class="sidebar">
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <button class="btn" style="width: 100%; margin-bottom: 16px;" onclick="document.getElementById('imageInput').click()">
+                <i class="fas fa-image"></i> Upload Image
+            </button>
+            <div id="imagePreview" style="display: none;"></div>
+        </aside>
+
+        <main class="chat-container" id="chatContainer">
+            <div class="message assistant">
+                <div class="avatar">AI</div>
+                <div class="content">
+                    Hello! I'm your AI farming assistant. I can help you with agricultural questions and analyze crop images. How can I assist you today?
+                </div>
+            </div>
+            <div id="responseArea"></div>
+        </main>
+    </div>
+
+    <div class="input-container">
+        <div class="input-box">
+            <textarea id="questionInput" rows="1" placeholder="Ask a question about farming..." oninput="autoResize(this)"></textarea>
+            <div class="actions">
+                <button class="btn-icon" onclick="document.getElementById('imageInput').click()">
+                    <i class="fas fa-image"></i>
+                </button>
+                <button class="btn" onclick="askQuestion()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loadingIndicator">
+        <div class="spinner"></div>
+        <span>Processing your request...</span>
+    </div>
+
+    <script>
+        // Configure marked.js options
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const preview = document.getElementById('imagePreview');
+            const file = e.target.files[0];
+            if (file) {
+                preview.style.display = 'block';
+                preview.src = URL.createObjectURL(file);
+            }
+        });
+
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+            
+            // For user messages, display as is
+            if (isUser) {
+                messageDiv.innerHTML = `
+                    <div class="avatar">You</div>
+                    <div class="content">${content}</div>
+                `;
+            } else {
+                // For AI messages, parse markdown and add proper classes
+                messageDiv.innerHTML = `
+                    <div class="avatar">AI</div>
+                    <div class="content markdown-content">${marked.parse(content)}</div>
+                `;
+            }
+            
+            document.getElementById('responseArea').appendChild(messageDiv);
+            messageDiv.scrollIntoView({ behavior: 'smooth' });
+            
+            // Initialize syntax highlighting for code blocks
+            messageDiv.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+            });
+        }
+
+        function showProcessing(message = 'Processing your request...') {
+            const overlay = document.getElementById('processingOverlay');
+            const text = overlay.querySelector('.processing-text');
+            text.textContent = message;
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling while processing
+        }
+
+        function hideProcessing() {
+            const overlay = document.getElementById('processingOverlay');
+            overlay.style.display = 'none';
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+
+        async function askQuestion() {
+            const questionInput = document.getElementById('questionInput');
+            const question = questionInput.value.trim();
+            if (!question) {
+                return;
+            }
+
+            addMessage(question, true);
+            showProcessing('Analyzing your question...');
+            questionInput.value = '';
+            questionInput.style.height = 'auto';
+
+            try {
+                const formData = new FormData();
+                formData.append('question', question);
+
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    addMessage(data.response);
+                } else {
+                    addMessage(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                addMessage(`Error: ${error.message}`);
+            } finally {
+                hideProcessing();
+            }
+        }
+
+        async function analyzeImage() {
+            const imageInput = document.getElementById('imageInput');
+            if (!imageInput.files[0]) {
+                return;
+            }
+
+            showProcessing('Analyzing your image...');
+            try {
+                const formData = new FormData();
+                formData.append('image', imageInput.files[0]);
+
+                const response = await fetch('/analyze-image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    addMessage(data.response);
+                } else {
+                    addMessage(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                addMessage(`Error: ${error.message}`);
+            } finally {
+                hideProcessing();
+            }
+        }
+
+        // Handle Enter key to send message
+        document.getElementById('questionInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                askQuestion();
+            }
+        });
+
+        // Automatically analyze image when uploaded
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                analyzeImage();
+            }
+        });
+    </script>
+</body>
+</html>
